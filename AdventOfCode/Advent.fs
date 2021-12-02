@@ -18,7 +18,9 @@ let private ReadDayInput (inputFolder: string, number: int) : string =
 
 type private DayLoader = string -> IDay
 
-let private days: DayLoader [] = [| fun input -> Day01(input) |]
+let private days: DayLoader [] =
+  [| fun input -> Day01(input)
+     fun input -> Day02(input) |]
 
 type DayResult =
   { Day: int

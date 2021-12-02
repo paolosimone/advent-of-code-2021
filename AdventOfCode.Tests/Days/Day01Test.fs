@@ -4,7 +4,7 @@ open Xunit
 open AdventOfCode.Days
 
 [<Fact>]
-let ``First Challenge`` () =
+let ``FirstChallenge`` () =
   let inputText =
     @"199
 200
@@ -21,7 +21,7 @@ let ``First Challenge`` () =
   Assert.Equal("7", day.FirstChallenge())
 
 [<Fact>]
-let ``Second Challenge`` () =
+let ``SecondChallenge`` () =
   let inputText =
     @"199
 200
