@@ -3,7 +3,7 @@ TEST_DIR	= AdventOfCode.Tests
 
 .PHONY: run
 run:
-	dotnet run --project $(SRC_DIR)
+	dotnet run -c Release --project $(SRC_DIR) $(day)
 
 .PHONY: test
 test:

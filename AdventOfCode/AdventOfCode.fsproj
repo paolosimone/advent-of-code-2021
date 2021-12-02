@@ -6,7 +6,24 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Program.fs" />
+    <!-- Compilation order is important! -->
+    <Compile Include="$(ProjectDir)\Days\IDay.fs" />
+    <Compile Include="$(ProjectDir)\Days\*.fs" Exclude="$(ProjectDir)\Days\IDay.fs" />
+    <Compile Include="$(ProjectDir)\Advent.fs" />
+    <Compile Include="$(ProjectDir)\Program.fs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FsPrettyTable" Version="0.1.0" >
+      <NoWarn>$(NoWarn);NU1701</NoWarn>
+    </PackageReference>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);RELEASE;TRACE</DefineConstants>
+    <DebugSymbols>false</DebugSymbols>
+    <DebugType>portable</DebugType>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
 
 </Project>
