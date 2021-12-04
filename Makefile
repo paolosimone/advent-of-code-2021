@@ -5,9 +5,10 @@ TEST_DIR	= AdventOfCode.Tests
 run:
 	dotnet run -c Release --project $(SRC_DIR) $(day)
 
+opts = ""
 .PHONY: test
 test:
-	dotnet test $(TEST_DIR)
+	dotnet test $(opts) $(TEST_DIR)
 
 .PHONY: format
 format: 
