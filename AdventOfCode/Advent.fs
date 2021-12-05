@@ -22,7 +22,8 @@ let private days: DayLoader [] =
   [| fun input -> Day01(input)
      fun input -> Day02(input)
      fun input -> Day03(input)
-     fun input -> Day04(input) |]
+     fun input -> Day04(input)
+     fun input -> Day05(input) |]
 
 type DayResult =
   { Day: int
