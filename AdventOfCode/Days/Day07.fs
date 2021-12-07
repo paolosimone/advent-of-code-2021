@@ -12,86 +12,70 @@ module private Day07 =
     |> Array.map(Int32.Parse)
 
   type Cost = int
-  type PositionCount = { Position: Position; Count: int }
+  type PositionCount = (Position * int)
 
-  let PositionCounts (input: Input) : PositionCount [] =
-    input
-    |> Seq.countBy(id)
-    |> Seq.map(fun (pos, count) -> { Position = pos; Count = count })
-    |> Seq.toArray
+  let PositionCounts (input: Input) : PositionCount [] = input |> Seq.countBy(id) |> Seq.toArray
 
-  let FindOptimalCost (computeCosts: PositionCount [] -> Cost []) (positionCounts: PositionCount []) : Cost =
-    let costsLeft = positionCounts |> computeCosts
-
-    let costsRight =
-      positionCounts
-      |> Array.map
-           (fun posCount ->
-             { posCount with
-                 Position = -posCount.Position })
-      |> computeCosts
-      |> Array.rev
-
-    let totalCosts =
-      costsLeft
-      |> Seq.zip(costsRight)
-      |> Seq.map(fun (left, right) -> left + right)
-
-    Seq.min(totalCosts)
-
+  // O(N * logN) :)
   module FirstChallenge =
-    let CostFunction (left: Position, right: Position) : Cost = Math.Abs(left - right)
+    let FuelCost (left: Position, right: Position) : Cost = Math.Abs(left - right)
 
-    // O(N) :)
-    let ComputeCosts (counts: PositionCount []) : Cost [] =
-      let counts =
-        counts
-        |> Array.sortBy(fun posCount -> posCount.Position)
+    let ComputeCosts (posCounts: PositionCount []) : Cost [] =
+      let posCounts =
+        posCounts |> Array.sortBy(fun (pos, _) -> pos)
 
-      let N = counts.Length - 1
+      let N = posCounts.Length - 1
       let costs = [| for _ in 0 .. N -> 0 |]
-      let mutable cumulativeCount = counts.[0].Count
+      let mutable cumulativeCount = snd(posCounts.[0])
 
       for i in 1 .. N do
         let deltaCost =
-          CostFunction(counts.[i - 1].Position, counts.[i].Position)
+          FuelCost(fst(posCounts.[i - 1]), fst(posCounts.[i]))
 
         costs.[i] <- costs.[i - 1] + cumulativeCount * deltaCost
-        cumulativeCount <- cumulativeCount + counts.[i].Count
+        cumulativeCount <- cumulativeCount + snd(posCounts.[i])
 
       costs
 
+    let FindOptimalCost (posCounts: PositionCount []) : Cost =
+      let costsLeft = posCounts |> ComputeCosts
+
+      let costsRight =
+        posCounts
+        |> Array.map(fun (pos, count) -> (-pos, count))
+        |> ComputeCosts
+        |> Array.rev
+
+      let totalCosts =
+        costsLeft
+        |> Seq.zip(costsRight)
+        |> Seq.map(fun (left, right) -> left + right)
+
+      Seq.min(totalCosts)
+
+  // O(N * M) :(
+  // ...luckily position range is small enough
   module SecondChallenge =
-    let CostFunction (left: Position, right: Position) : Cost =
+    let FuelCost (left: Position, right: Position) : Cost =
       let delta = Math.Abs(left - right)
       (delta * (delta + 1)) / 2
 
-    // O(N^2) :(
-    let ComputeCosts (counts: PositionCount []) : Cost [] =
-      let counts =
-        counts
-        |> Array.sortBy(fun posCount -> posCount.Position)
+    let ComputePositionCost (posCounts: PositionCount [], position: Position) : Cost =
+      posCounts
+      |> Seq.map(fun (current, count) -> count * FuelCost(current, position))
+      |> Seq.sum
 
-      let minPos = counts.[0].Position
-      let maxPos = Array.last(counts).Position
+    let FindOptimalCost (posCounts: PositionCount []) : Cost =
+      let positions =
+        posCounts |> Seq.map(fun (pos, _) -> pos)
 
-      let costs = [| for _ in minPos .. maxPos -> 0 |]
+      let minPos = positions |> Seq.min
+      let maxPos = positions |> Seq.max
 
-      let mutable i = 0
+      let costs =
+        [| for pos in minPos .. maxPos -> ComputePositionCost(posCounts, pos) |]
 
-      for pos in (minPos + 1) .. maxPos do
-        costs.[pos - minPos] <-
-          counts.[0..i]
-          |> Seq.map
-               (fun posCount ->
-                 posCount.Count
-                 * CostFunction(posCount.Position, pos))
-          |> Seq.sum
-
-        if pos >= counts.[i + 1].Position then
-          i <- i + 1
-
-      costs
+      Seq.min(costs)
 
 type Day07(inputText: string) =
   let input = Day07.Parse(inputText)
@@ -100,11 +84,11 @@ type Day07(inputText: string) =
     member this.FirstChallenge() =
       input
       |> Day07.PositionCounts
-      |> Day07.FindOptimalCost(Day07.FirstChallenge.ComputeCosts)
+      |> Day07.FirstChallenge.FindOptimalCost
       |> fun cost -> cost.ToString()
 
     member this.SecondChallenge() =
       input
       |> Day07.PositionCounts
-      |> Day07.FindOptimalCost(Day07.SecondChallenge.ComputeCosts)
+      |> Day07.SecondChallenge.FindOptimalCost
       |> fun cost -> cost.ToString()
