@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Compilation order is important! -->
+    <Compile Include="$(ProjectDir)\Utils.fs" />
     <Compile Include="$(ProjectDir)\Days\IDay.fs" />
     <Compile Include="$(ProjectDir)\Days\*.fs" Exclude="$(ProjectDir)\Days\IDay.fs" />
     <Compile Include="$(ProjectDir)\Advent.fs" />
