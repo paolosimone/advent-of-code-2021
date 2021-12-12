@@ -48,36 +48,55 @@ module private Day12 =
     |> BuildTunnelMap
 
   type Path = list<Cave>
+  type Visited = Set<Cave>
+  type Memo = Dictionary<(Visited * bool * Cave), list<Path>>
 
-  // could probably use some memoization :/
-  let rec FindPathsRec (map: TunnelMap) (visited: HashSet<Cave>) (allowTwice: bool) (path: Path) : Set<Path> =
-    let current = List.head(path)
+  let rec FindPathsRec
+    (map: TunnelMap)
+    (memo: Memo)
+    (visited: Visited)
+    (allowTwice: bool)
+    (current: Cave)
+    : list<Path> =
+    if memo.ContainsKey((visited, allowTwice, current)) then
+      memo.[(visited, allowTwice, current)]
+    else
+      let NextPaths (visited: Visited, allowTwice: bool) =
+        map.[current]
+        |> Seq.filter(fun next -> not(visited.Contains(next)))
+        |> Seq.collect(fun next -> FindPathsRec(map) (memo) (visited) (allowTwice) (next))
+        |> Seq.toList
 
-    let NextPaths (allowTwice) =
-      map.[current]
-      |> Seq.filter(fun next -> not(visited.Contains(next)))
-      |> Seq.map(fun next -> FindPathsRec(map) (visited) (allowTwice) (next :: path))
-      |> Set.unionMany
+      let pathsFromCurrent =
+        match current with
+        | End -> [ [ current ] ]
+        | Small (_) ->
+          let visitedWithCurrent = visited.Add(current)
 
-    match current with
-    | End -> Set([ path ])
-    | Small (_) ->
-      visited.Add(current) |> ignore
-      let mutable pathsFromCurrent = NextPaths(allowTwice)
-      visited.Remove(current) |> ignore
+          let mutable pathsFromCurrent =
+            NextPaths(visitedWithCurrent, allowTwice)
 
-      if allowTwice then
-        pathsFromCurrent <- pathsFromCurrent + NextPaths(false)
+          if allowTwice then
+            pathsFromCurrent <-
+              pathsFromCurrent
+              |> Seq.append(NextPaths(visited, false))
+              |> Set
+              |> Seq.toList
 
-      pathsFromCurrent
-    | _ -> NextPaths(allowTwice)
+          pathsFromCurrent
+        | _ -> NextPaths(visited, allowTwice)
+
+      let pathsWithCurrent =
+        pathsFromCurrent
+        |> List.map(fun pathToEnd -> current :: pathToEnd)
+
+      memo.[(visited, allowTwice, current)] <- pathsWithCurrent
+      pathsWithCurrent
 
   let CountPaths (allowTwice: bool) (map: TunnelMap) : int =
-    let visited = new HashSet<Cave>([ Start ])
-
-    [ Start ]
-    |> FindPathsRec(map) (visited) (allowTwice)
-    |> Set.count
+    Start
+    |> FindPathsRec(map) (Memo()) (Visited([ Start ])) (allowTwice)
+    |> Seq.length
 
 type Day12(inputText: string) =
   let input = Day12.Parse(inputText)
